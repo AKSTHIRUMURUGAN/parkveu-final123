@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parking Status</title>
+    <style>
+        .parking-space {
+            width: 100px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid black;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .empty {
+            background-color: white; /* Empty slot background color */
+        }
+
+        .occupied {
+            background-color: red;
+        }
+
+        .free {
+            background-color: green;
+        }
+
+        .info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .container {
+            display:grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            padding-left:50px;
+            margin-top:50px;
+            margin-bottom:50px;
+
+        }
+
+        .parking-container {
+            width: 250px ;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            gap: 5px;
+        }
+
+        #slot-b1{
+         grid-column:1/ span 2;
+         grid-row:9; 
+         visibility:hidden; /* Empty row background color */
+        }
+        #slot-b2{
+         grid-column:2;
+         grid-row:1;
+         visibility:hidden;/* Empty row background color */
+        }
+    </style>
+</head>
+<body>
+<h1>Parking Status</h1>
+<div class="info">
+    Total Available Slots: <span id="total-available-slots">0</span><br>
+    Total Occupied Slots: <span id="total-occupied-slots">0</span><br>
+    Available Slots: <span id="available-slots"></span>
+</div>
+<div class="container">
+<div class="parking-container" id="parking-container-1">
+    <!-- Parking slots from 1 to 24 will be added here -->
+</div>
+<div class="parking-container" id="parking-container-2">
+    <!-- Parking slots from 25 to 48 with the 9th row as empty -->
+</div>
+<div class="parking-container" id="parking-container-3">
+    <!-- Parking slots from 49 to 72 with the 2nd column 1st slot as empty -->
+</div>
+</div>
+<div class="info">
+    <h2>Current Parking Status:</h2>
+    <ul id="current-parking-status">
+        <!-- sv list elements will be displayed here -->
+    </ul>
+</div>
+<script>
+    function createParkingSlot(slotNumber) {
+        const parkingSpace = document.createElement('div');
+        parkingSpace.classList.add('parking-space', 'empty'); // Initialize as empty slot
+        parkingSpace.id = `slot-${slotNumber}`;
+        parkingSpace.textContent = `Slot ${slotNumber}`;
+        return parkingSpace;
+    }
+
+    function updateParkingStatus() {
+        // Perform an AJAX request to get the updated sv list
+        fetch('/get_sv')
+            .then(response => response.json())
+            .then(data => {
+                // Clear the previous parking slots
+                document.getElementById('parking-container-1').innerHTML = '';
+                document.getElementById('parking-container-2').innerHTML = ''; 
+                document.getElementById('parking-container-3').innerHTML = '';
+                const bc1=createParkingSlot("b1");
+                document.getElementById('parking-container-2').appendChild(bc1)
+                const bc2=createParkingSlot("b2");
+                document.getElementById('parking-container-3').appendChild(bc2)
+                
+
+                // Initialize variables for counting slots and available slot numbers
+                let totalAvailableSlots = 0;
+                let totalOccupiedSlots = 0;
+                let availableSlotNumbers = [];
+
+                // Create parking slots based on the updated sv list
+                data.forEach(slot => {
+                    const parkingContainer =
+                        slot.slot <= 24 ? document.getElementById('parking-container-1') :
+                        slot.slot <= 46 ? document.getElementById('parking-container-2') :
+                        document.getElementById('parking-container-3');
+
+                    const parkingSpace = createParkingSlot(slot.slot);
+                    parkingSpace.classList.remove('empty'); // Remove empty class if it's occupied
+                    parkingSpace.classList.add(slot.status); // Add status class (free or occupied)
+                    parkingContainer.appendChild(parkingSpace);
+
+                    // Update slot counters
+                    if (slot.status === 'free') {
+                        totalAvailableSlots++;
+                        availableSlotNumbers.push(slot.slot);
+                    } else {
+                        totalOccupiedSlots++;
+                    }
+                });
+
+                // Update the displayed slot counts
+                document.getElementById('total-available-slots').textContent = totalAvailableSlots;
+                document.getElementById('total-occupied-slots').textContent = totalOccupiedSlots;
+
+                // Update the available slots as comma-separated numbers
+                document.getElementById('available-slots').textContent = availableSlotNumbers.join(', ');
+
+                // Update the current parking status list
+                const currentParkingStatus = document.getElementById('current-parking-status');
+                currentParkingStatus.innerHTML = ''; // Clear previous list
+                data.forEach(slot => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `Slot ${slot.slot}: ${slot.status}`;
+                    currentParkingStatus.appendChild(listItem);
+                });
+            });
+    }
+
+    // Periodically update parking status every 5 seconds (adjust as needed)
+    setInterval(updateParkingStatus, 5000);
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
