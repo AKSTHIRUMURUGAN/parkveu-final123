@@ -1,6 +1,4 @@
 Flask
 Gunicorn
 numpy
-pickle
-threading
 opencv-python
