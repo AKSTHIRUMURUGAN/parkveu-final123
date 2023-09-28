@@ -91,7 +91,7 @@ def get_sv():
 
     with lock:
         return jsonify(sv)
-app.run()
+
 
 
 
