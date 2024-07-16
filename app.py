@@ -3,11 +3,11 @@ import cv2
 import numpy as np
 import pickle
 import threading
-# from flask_ngrok import run_with_ngrok 
-
+from flask_cors import CORS
 
 app = Flask(__name__)
-# run_with_ngrok(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 # Initialize the lock for threading
 lock = threading.Lock()
 
@@ -81,6 +81,9 @@ def index():
     global sv, img
 
     with lock:
+        if not sv:
+            return jsonify(message="No data found or processing not started yet"), 404
+
         sc = sv  # Get the current sv list
 
     return render_template('index.html', sv=sc, img=img)
@@ -90,8 +93,15 @@ def get_sv():
     global sv
 
     with lock:
-        return jsonify(sv)
+        if not sv:
+            return jsonify(message="No data found or processing not started yet"), 404
 
+        data = sv  # Get the current sv list
 
+    if not data:
+        return jsonify(message="No data found"), 404
 
+    return jsonify(data), 200
 
+if __name__ == '__main__':
+    app.run()
